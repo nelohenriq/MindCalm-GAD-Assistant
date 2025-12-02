@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MoodEntry, LifestyleEntry, ThoughtRecord, Medication, MedicationLog } from '../types';
-import { Activity, Pill, Moon, AlertCircle, Star } from 'lucide-react';
+import { Activity, Pill, Moon, AlertCircle, Star, Quote } from 'lucide-react';
 import AnxietyMeter from './AnxietyMeter';
 
 interface DashboardProps {
@@ -13,7 +13,29 @@ interface DashboardProps {
   medLogs: MedicationLog[];
 }
 
+const QUOTES = [
+  { text: "You don’t have to control your thoughts. You just have to stop letting them control you.", author: "Dan Millman" },
+  { text: "Anxiety does not empty tomorrow of its sorrows, but only empties today of its strength.", author: "Charles Spurgeon" },
+  { text: "Feelings come and go like clouds in a windy sky. Conscious breathing is my anchor.", author: "Thich Nhat Hanh" },
+  { text: "The best use of imagination is creativity. The worst use of imagination is anxiety.", author: "Deepak Chopra" },
+  { text: "Do not anticipate trouble, or worry about what may never happen. Keep in the sunlight.", author: "Benjamin Franklin" },
+  { text: "Nothing diminishes anxiety faster than action.", author: "Walter Anderson" },
+  { text: "Whatever you resist, persists.", author: "Carl Jung" },
+  { text: "Trust yourself. You’ve survived a lot, and you’ll survive whatever is coming.", author: "Robert Tew" }
+];
+
 const Dashboard: React.FC<DashboardProps> = ({ moods, lifestyle, thoughts, medications, medLogs }) => {
+  const [quoteIndex, setQuoteIndex] = useState(0);
+
+  useEffect(() => {
+    // Rotate quote every 10 seconds
+    const interval = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % QUOTES.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentQuote = QUOTES[quoteIndex];
   
   // Prepare chart data 
   const chartData = moods.slice(-7).map(m => ({
@@ -59,6 +81,29 @@ const Dashboard: React.FC<DashboardProps> = ({ moods, lifestyle, thoughts, medic
 
   return (
     <div className="space-y-6 animate-fade-in">
+      
+      {/* Inspirational Quote Banner */}
+      <div className="bg-gradient-to-r from-teal-600 to-emerald-600 dark:from-teal-800 dark:to-emerald-800 rounded-xl p-6 shadow-md text-white flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-500">
+         <div className="absolute top-2 left-4 opacity-20">
+            <Quote size={40} />
+         </div>
+         <p className="text-lg md:text-xl font-medium italic mb-2 relative z-10 animate-fade-in key={quoteIndex}">
+           "{currentQuote.text}"
+         </p>
+         <p className="text-xs md:text-sm opacity-90 font-medium relative z-10">
+           — {currentQuote.author}
+         </p>
+         <div className="flex gap-1 mt-4">
+            {QUOTES.map((_, idx) => (
+               <button 
+                 key={idx}
+                 onClick={() => setQuoteIndex(idx)}
+                 className={`h-1.5 rounded-full transition-all ${idx === quoteIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`}
+               />
+            ))}
+         </div>
+      </div>
+
       <header className="mb-8">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Welcome Back</h2>
         <p className="text-slate-500 dark:text-slate-400">Here is your daily overview for managing GAD.</p>

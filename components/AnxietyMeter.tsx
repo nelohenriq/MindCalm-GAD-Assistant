@@ -31,9 +31,9 @@ const AnxietyMeter: React.FC<AnxietyMeterProps> = ({
     const timer = setTimeout(() => setAnimateChange(false), 300);
     
     // Haptic feedback if available and not read-only
-    // Using a slightly longer duration (10ms) for a distinct "step" feel
     if (!readOnly && typeof navigator !== 'undefined' && navigator.vibrate && onChange) {
-      navigator.vibrate(10);
+      // Short, crisp vibration for distinct step feel
+      navigator.vibrate(15);
     }
     
     return () => clearTimeout(timer);
@@ -88,7 +88,7 @@ const AnxietyMeter: React.FC<AnxietyMeterProps> = ({
       {/* Header / Value Display */}
       <div className="flex justify-between items-end mb-3">
         <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-xl transition-colors duration-300 ${getColor(level).replace('text-', 'bg-opacity-20 ')}`}>
+            <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-xl transition-colors duration-300 shadow-sm ${getColor(level).replace('text-', 'bg-opacity-20 ')}`}>
                {level}
             </div>
             <div className="flex flex-col">
@@ -102,13 +102,25 @@ const AnxietyMeter: React.FC<AnxietyMeterProps> = ({
         {previousLevel !== undefined && (
             <div className="flex flex-col items-end">
                  <span className="text-[10px] text-slate-400 uppercase font-semibold">Trend</span>
-                 <div className="flex items-center gap-1 text-sm font-bold">
-                    {trend > 0 && <TrendingUp size={16} className="text-rose-500" />}
-                    {trend < 0 && <TrendingDown size={16} className="text-emerald-500" />}
-                    {trend === 0 && <Minus size={16} className="text-slate-400" />}
-                    <span className={trend > 0 ? 'text-rose-500' : trend < 0 ? 'text-emerald-500' : 'text-slate-500'}>
-                       {trend === 0 ? 'Stable' : `${Math.abs(trend)} pts`}
-                    </span>
+                 <div className="flex items-center gap-2">
+                    {/* Numeric Trend */}
+                    <div className="flex items-center gap-1 text-sm font-bold">
+                        {trend > 0 && <TrendingUp size={16} className="text-rose-500" />}
+                        {trend < 0 && <TrendingDown size={16} className="text-emerald-500" />}
+                        {trend === 0 && <Minus size={16} className="text-slate-400" />}
+                        <span className={trend > 0 ? 'text-rose-500' : trend < 0 ? 'text-emerald-500' : 'text-slate-500'}>
+                        {trend === 0 ? 'Stable' : `${Math.abs(trend)}`}
+                        </span>
+                    </div>
+                    {/* Visual Pips for Steps */}
+                    {trend !== 0 && (
+                        <div className="flex gap-0.5">
+                            {[...Array(Math.min(Math.abs(trend), 5))].map((_, i) => (
+                                <div key={i} className={`w-1 h-1 rounded-full ${trend > 0 ? 'bg-rose-400' : 'bg-emerald-400'}`} />
+                            ))}
+                            {Math.abs(trend) > 5 && <span className="text-[8px] text-slate-400">+</span>}
+                        </div>
+                    )}
                  </div>
             </div>
         )}
@@ -160,11 +172,29 @@ const AnxietyMeter: React.FC<AnxietyMeterProps> = ({
          )}
       </div>
 
+      {/* Scale Ticks & Labels */}
+      {!readOnly && size !== 'small' && (
+          <div className="flex justify-between px-1 mt-1 select-none">
+             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                 <div key={n} className="flex flex-col items-center w-full">
+                     {/* Tick Mark */}
+                     <div className={`w-px h-1 mb-1 ${n % 5 === 0 ? 'bg-slate-300 dark:bg-slate-600 h-1.5' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                     {/* Number (only for 1, 5, 10) */}
+                     <span className={`text-[9px] font-medium leading-none ${n === level ? 'text-slate-600 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}`}>
+                         {n === 1 || n === 5 || n === 10 ? n : ''}
+                     </span>
+                 </div>
+             ))}
+          </div>
+      )}
+
       {/* Helper Labels */}
-      <div className="flex justify-between text-[10px] uppercase font-bold text-slate-300 dark:text-slate-600 px-1">
-          <span>Calm</span>
-          <span>Panic</span>
-      </div>
+      {size !== 'small' && (
+        <div className="flex justify-between text-[10px] uppercase font-bold text-slate-300 dark:text-slate-600 px-1 mt-1">
+            <span>Calm</span>
+            <span>Panic</span>
+        </div>
+      )}
 
       {/* Expand History Button */}
       {history.length > 0 && (

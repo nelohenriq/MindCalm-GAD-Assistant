@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, X, Check, Wind, Heart } from 'lucide-react';
+import { Play, Pause, X, Check, Wind, Heart, Zap, Droplets } from 'lucide-react';
 import AnxietyMeter from './AnxietyMeter';
 import { BreathingSession } from '../types';
 
-export type TechniqueId = 'box' | '4-7-8' | 'cyclic' | 'resonance' | 'panic' | 'deep';
+export type TechniqueId = 'box' | '4-7-8' | 'cyclic' | 'resonance' | 'panic' | 'deep' | 'vns-hum' | 'vns-gargle';
 
 interface BreathingCoachProps {
   techniqueId: TechniqueId;
@@ -64,6 +63,22 @@ const TECHNIQUES = {
       { label: 'Inhale', duration: 4000, scale: 1.4, type: 'inhale' },
       { label: 'Hold', duration: 2000, scale: 1.4, type: 'hold' },
       { label: 'Exhale', duration: 6000, scale: 1.0, type: 'exhale' },
+    ]
+  },
+  'vns-hum': {
+    name: 'Vagus Humming',
+    description: 'Inhale 4s, Hum on Exhale 8s',
+    phases: [
+      { label: 'Inhale', duration: 4000, scale: 1.4, type: 'inhale' },
+      { label: 'Hummmm', duration: 8000, scale: 1.0, type: 'exhale' },
+    ]
+  },
+  'vns-gargle': {
+    name: 'Vagus Gargling',
+    description: 'Sip Water 5s, Gargle 10s',
+    phases: [
+      { label: 'Sip / Rest', duration: 5000, scale: 1.2, type: 'inhale' },
+      { label: 'Gargle', duration: 10000, scale: 1.0, type: 'exhale' },
     ]
   }
 };
@@ -180,16 +195,27 @@ const BreathingCoach: React.FC<BreathingCoachProps> = ({ techniqueId, onComplete
           How anxious do you feel right now?
         </p>
         
-        <div className="w-full max-w-sm mb-8">
+        <div className="w-full max-w-sm mb-6">
            <AnxietyMeter level={anxietyBefore} onChange={setAnxietyBefore} size="large" />
         </div>
+
+        {techniqueId === 'vns-gargle' && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800 mb-6 flex items-center gap-3">
+             <div className="p-2 bg-indigo-100 dark:bg-indigo-800 rounded-full text-indigo-600 dark:text-indigo-300">
+                <Droplets size={20} />
+             </div>
+             <p className="text-sm text-indigo-800 dark:text-indigo-200">
+               <strong>Preparation:</strong> Please have a glass of water ready for this exercise.
+             </p>
+          </div>
+        )}
 
         <div className="flex gap-4">
           <button onClick={onCancel} className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
             Cancel
           </button>
           <button onClick={startSession} className="px-8 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-lg transition-transform hover:-translate-y-1 flex items-center gap-2">
-            <Play size={20} fill="currentColor" /> Start Breathing
+            <Play size={20} fill="currentColor" /> Start {techniqueId.includes('vns') ? 'Exercise' : 'Breathing'}
           </button>
         </div>
       </div>
@@ -255,7 +281,7 @@ const BreathingCoach: React.FC<BreathingCoachProps> = ({ techniqueId, onComplete
                  backgroundColor: instruction === 'Hold' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(20, 184, 166, 0.1)'
                }}
             >
-               <span className="text-2xl font-bold text-slate-800 dark:text-white tracking-widest uppercase">
+               <span className="text-2xl font-bold text-slate-800 dark:text-white tracking-widest uppercase text-center">
                  {instruction}
                </span>
                <Wind 
@@ -279,7 +305,9 @@ const BreathingCoach: React.FC<BreathingCoachProps> = ({ techniqueId, onComplete
          </div>
          
          <p className="mt-8 text-slate-400 text-sm max-w-xs text-center">
-           Sync your breath with the circle. Inhale as it expands, exhale as it shrinks.
+            {techniqueId === 'vns-hum' ? "Make a humming sound like a bee as you exhale." : 
+             techniqueId === 'vns-gargle' ? "Gargle water vigorously during the active phase." :
+             "Sync your breath with the circle. Inhale as it expands, exhale as it shrinks."}
          </p>
       </div>
     </div>

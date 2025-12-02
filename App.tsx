@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { NavigationTab, MoodEntry, LifestyleEntry, ThoughtRecord, Medication, MedicationLog, ActivityPlan, BreathingSession, GAD7Result, Workout } from './types';
+import { NavigationTab, MoodEntry, LifestyleEntry, ThoughtRecord, Medication, MedicationLog, ActivityPlan, BreathingSession, GAD7Result, Workout, PostponedWorry } from './types';
 import Dashboard from './components/Dashboard';
 import CBTTools from './components/CBTTools';
 import MedicationTracker from './components/MedicationTracker';
@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [breathingSessions, setBreathingSessions] = useState<BreathingSession[]>([]);
   const [gad7History, setGad7History] = useState<GAD7Result[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [postponedWorries, setPostponedWorries] = useState<PostponedWorry[]>([]);
 
   // Dark Mode Effect
   useEffect(() => {
@@ -54,6 +55,7 @@ const App: React.FC = () => {
     const loadedBreathing = localStorage.getItem('breathingSessions');
     const loadedGad7 = localStorage.getItem('gad7History');
     const loadedWorkouts = localStorage.getItem('workouts');
+    const loadedWorries = localStorage.getItem('postponedWorries');
 
     if (loadedMoods) setMoods(JSON.parse(loadedMoods));
     if (loadedLifestyle) setLifestyle(JSON.parse(loadedLifestyle));
@@ -64,6 +66,7 @@ const App: React.FC = () => {
     if (loadedBreathing) setBreathingSessions(JSON.parse(loadedBreathing));
     if (loadedGad7) setGad7History(JSON.parse(loadedGad7));
     if (loadedWorkouts) setWorkouts(JSON.parse(loadedWorkouts));
+    if (loadedWorries) setPostponedWorries(JSON.parse(loadedWorries));
   }, []);
 
   // Save Data Helpers
@@ -115,6 +118,17 @@ const App: React.FC = () => {
     localStorage.setItem('workouts', JSON.stringify(newWorkouts));
   }
 
+  const addPostponedWorry = (worry: PostponedWorry) => {
+    const updatedWorries = [worry, ...postponedWorries];
+    setPostponedWorries(updatedWorries);
+    localStorage.setItem('postponedWorries', JSON.stringify(updatedWorries));
+  }
+
+  const updatePostponedWorries = (worries: PostponedWorry[]) => {
+    setPostponedWorries(worries);
+    localStorage.setItem('postponedWorries', JSON.stringify(worries));
+  }
+
   // Calculate Med Compliance for Analytics
   const calculateMedCompliance = () => {
      if (medications.length === 0) return 0;
@@ -133,13 +147,17 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard moods={moods} lifestyle={lifestyle} thoughts={thoughts} medications={medications} medLogs={medLogs} />;
       case 'cbt':
-        return <CBTTools thoughts={thoughts} addThought={addThought} activities={activities} updateActivities={updateActivities} />;
+        return <CBTTools 
+            thoughts={thoughts} addThought={addThought} 
+            activities={activities} updateActivities={updateActivities}
+            worries={postponedWorries} addWorry={addPostponedWorry} updateWorries={updatePostponedWorries}
+        />;
       case 'medication':
         return <MedicationTracker medications={medications} setMedications={updateMedications} medLogs={medLogs} addMedLog={addMedLog} />;
       case 'lifestyle':
         return <LifestyleTracker onSaveEntry={saveMoodAndLifestyle} lifestyleHistory={lifestyle} moodHistory={moods} workouts={workouts} setWorkouts={updateWorkouts} />;
       case 'breathing':
-        return <BreathingTools onSessionComplete={addBreathingSession} />;
+        return <BreathingTools onSessionComplete={addBreathingSession} sessions={breathingSessions} />;
       case 'analytics':
         return <Analytics 
           gad7History={gad7History} 

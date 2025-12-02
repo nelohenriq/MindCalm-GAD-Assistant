@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { LifestyleEntry } from '../types';
-import { Moon, Sun, Clock, Smartphone, Coffee, Wine, AlertCircle, Zap, Star, Battery, X } from 'lucide-react';
+import { Moon, Sun, Clock, Smartphone, Coffee, Wine, AlertCircle, Zap, Star, Battery, X, ToggleLeft, ToggleRight, Check } from 'lucide-react';
 
 interface SleepTrackerProps {
   entry: Partial<LifestyleEntry>;
@@ -12,11 +12,11 @@ interface SleepTrackerProps {
 const SLEEP_GOAL = 8;
 
 const FACTORS = [
-  { id: 'screens', label: 'Screens <1h bed', icon: Smartphone, color: 'text-blue-500' },
+  { id: 'screens', label: 'Screens <1h', icon: Smartphone, color: 'text-blue-500' },
   { id: 'alcohol', label: 'Alcohol', icon: Wine, color: 'text-rose-500' },
   { id: 'caffeine', label: 'Late Caffeine', icon: Coffee, color: 'text-amber-600' },
-  { id: 'stress', label: 'High Stress', icon: AlertCircle, color: 'text-red-500' },
   { id: 'late_meal', label: 'Late Meal', icon: Clock, color: 'text-orange-500' },
+  { id: 'stress', label: 'High Stress', icon: AlertCircle, color: 'text-red-500' },
 ];
 
 const SleepTracker: React.FC<SleepTrackerProps> = ({ entry, onChange, history }) => {
@@ -55,19 +55,34 @@ const SleepTracker: React.FC<SleepTrackerProps> = ({ entry, onChange, history })
     
     // Factors (Max 20, subtractive)
     const factorPenalty = (entry.sleepFactors?.length || 0) * 5;
-    score = Math.min(100, Math.max(0, score + 20 - factorPenalty));
+    const stressPenalty = (entry.stressLevel || 0) * 2;
+    
+    score = Math.min(100, Math.max(0, score + 20 - factorPenalty - stressPenalty));
     
     return score;
-  }, [entry.sleepHours, entry.sleepQuality, entry.sleepFactors]);
+  }, [entry.sleepHours, entry.sleepQuality, entry.sleepFactors, entry.stressLevel]);
 
   // --- HANDLERS ---
   const toggleFactor = (factorId: string) => {
     const current = entry.sleepFactors || [];
+    let updates: Partial<LifestyleEntry> = {};
+
     if (current.includes(factorId)) {
-      onChange({ sleepFactors: current.filter(f => f !== factorId) });
+      // Remove
+      updates.sleepFactors = current.filter(f => f !== factorId);
+      // Reset stress level if stress factor is removed
+      if (factorId === 'stress') {
+          updates.stressLevel = 0;
+      }
     } else {
-      onChange({ sleepFactors: [...current, factorId] });
+      // Add
+      updates.sleepFactors = [...current, factorId];
+      // Default stress level if stress factor is added
+      if (factorId === 'stress') {
+          updates.stressLevel = 2; // Default to Moderate
+      }
     }
+    onChange(updates);
   };
 
   const handleWakeLight = () => {
@@ -186,24 +201,62 @@ const SleepTracker: React.FC<SleepTrackerProps> = ({ entry, onChange, history })
                 </span>
             </div>
 
-            {/* Negative Factors */}
-            <div>
-                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Disruptors</label>
-                 <div className="grid grid-cols-2 gap-2">
-                     {FACTORS.map(factor => (
-                         <button
-                            key={factor.id}
-                            onClick={() => toggleFactor(factor.id)}
-                            className={`flex items-center gap-2 p-2 rounded-lg text-xs font-medium border transition-all ${
-                                (entry.sleepFactors || []).includes(factor.id)
-                                ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-700 text-indigo-900 dark:text-indigo-100'
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300'
-                            }`}
-                         >
-                            <factor.icon size={14} className={(entry.sleepFactors || []).includes(factor.id) ? 'text-indigo-600 dark:text-indigo-300' : factor.color} />
-                            {factor.label}
-                         </button>
-                     ))}
+            {/* Factors Grid */}
+            <div className="space-y-3">
+                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Sleep Disruptors</label>
+                 <div className="grid grid-cols-2 gap-3">
+                     {FACTORS.map(factor => {
+                         const isActive = (entry.sleepFactors || []).includes(factor.id);
+                         const isStress = factor.id === 'stress';
+                         const colSpan = isStress && isActive ? 'col-span-2' : 'col-span-1';
+
+                         return (
+                            <div key={factor.id} className={`${colSpan} p-3 rounded-lg border transition-all cursor-pointer relative overflow-hidden ${
+                                isActive 
+                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' 
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            }`} onClick={(e) => {
+                                toggleFactor(factor.id);
+                            }}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-1.5 rounded-full ${isActive ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>
+                                            <factor.icon size={16} />
+                                        </div>
+                                        <span className={`text-sm font-medium ${isActive ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                                            {factor.label}
+                                        </span>
+                                    </div>
+                                    <div className={`transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-300 dark:text-slate-600'}`}>
+                                        {isActive ? <Check size={20} className="stroke-[3]" /> : <div className="w-5 h-5 rounded border border-slate-300 dark:border-slate-600" />}
+                                    </div>
+                                </div>
+
+                                {/* Specific Stress Intensity Selector */}
+                                {isStress && isActive && (
+                                    <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/50 flex gap-2 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                        {[1, 2, 3].map(level => (
+                                            <button
+                                                key={level}
+                                                onClick={() => onChange({ stressLevel: level })}
+                                                className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors border ${
+                                                    entry.stressLevel === level
+                                                    ? level === 1 
+                                                        ? 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-200 dark:border-yellow-900' 
+                                                        : level === 2
+                                                            ? 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-900'
+                                                            : 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-200 dark:border-red-900'
+                                                    : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+                                                }`}
+                                            >
+                                                {level === 1 ? 'Mild' : level === 2 ? 'Mod' : 'High'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                         );
+                     })}
                  </div>
             </div>
 

@@ -131,13 +131,19 @@ export const checkDrugInteractions = async (newMed: string, existingMeds: string
   }
 };
 
-export const getCopingStrategy = async (moodScore: number, notes: string): Promise<string> => {
+export const getCopingStrategy = async (anxietyScore: number, symptoms: string[], notes: string): Promise<string> => {
     try {
         const model = "gemini-2.5-flash";
         const prompt = `
-          The user has reported a mood score of ${moodScore}/10 (10 being best, 1 being worst anxiety) and wrote: "${notes}".
-          Provide a single, short, actionable, evidence-based coping strategy (1-2 sentences) relevant to GAD.
-          Be supportive and calm.
+          The user has reported a high anxiety score of ${anxietyScore}/10.
+          Reported Symptoms: ${symptoms.length > 0 ? symptoms.join(', ') : 'None specified'}.
+          User Notes: "${notes || 'None'}".
+          
+          Provide a single, specific, evidence-based coping strategy (CBT or physiological) relevant to this state.
+          - If they mention physical symptoms (e.g. racing heart, muscle tension), suggest a physiological tool (e.g. Box Breathing, PMR).
+          - If they mention worry/thoughts, suggest a cognitive tool (e.g. 3Cs, Worry Postponement).
+          
+          Keep it under 3 sentences. Be warm, directive, and supportive.
         `;
 
         const response = await ai.models.generateContent({
@@ -145,10 +151,10 @@ export const getCopingStrategy = async (moodScore: number, notes: string): Promi
             contents: prompt,
         });
 
-        return response.text || "Take a few deep breaths.";
+        return response.text || "Take a few deep breaths and focus on the present moment.";
     } catch (error) {
         console.error("Error getting coping strategy", error);
-        return "Focus on your breathing for a moment.";
+        return "Focus on your breathing for a moment. Inhale for 4, exhale for 6.";
     }
 }
 

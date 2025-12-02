@@ -26,6 +26,13 @@ export interface ThoughtRecord {
   intensityAfter?: number; // 1-10
 }
 
+export interface PostponedWorry {
+  id: string;
+  text: string;
+  dateLogged: string;
+  processed: boolean;
+}
+
 export interface ActivityPlan {
   id: string;
   title: string;
@@ -72,6 +79,7 @@ export interface LifestyleEntry {
   bedTime?: string; // HH:MM
   wakeTime?: string; // HH:MM
   sleepFactors?: string[]; // 'screens', 'alcohol', 'late_meal', 'stress', 'caffeine'
+  stressLevel?: number; // 1-3 (Mild, Mod, High) specifically for sleep context
   exerciseMinutes: number;
   caffeineIntake: number; // cups
   waterIntake: number; // glasses
@@ -81,7 +89,7 @@ export interface LifestyleEntry {
 export interface BreathingSession {
   id: string;
   date: string;
-  technique: 'box' | '4-7-8' | 'cyclic' | 'resonance' | 'panic' | 'deep';
+  technique: 'box' | '4-7-8' | 'cyclic' | 'resonance' | 'panic' | 'deep' | 'vns-hum' | 'vns-gargle';
   durationSeconds: number;
   completed: boolean;
   anxietyBefore?: number;

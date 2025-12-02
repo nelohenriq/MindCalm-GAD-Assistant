@@ -31,6 +31,7 @@ const LifestyleTracker: React.FC<LifestyleTrackerProps> = ({ onSaveEntry, lifest
   const [wakeTime, setWakeTime] = useState('06:30');
   const [sleepQuality, setSleepQuality] = useState(3); // 1-5
   const [sleepFactors, setSleepFactors] = useState<string[]>([]);
+  const [stressLevel, setStressLevel] = useState(0);
 
   const [exercise, setExercise] = useState(30);
   const [caffeine, setCaffeine] = useState(1);
@@ -68,6 +69,7 @@ const LifestyleTracker: React.FC<LifestyleTrackerProps> = ({ onSaveEntry, lifest
     if (updates.wakeTime !== undefined) setWakeTime(updates.wakeTime);
     if (updates.sleepQuality !== undefined) setSleepQuality(updates.sleepQuality);
     if (updates.sleepFactors !== undefined) setSleepFactors(updates.sleepFactors);
+    if (updates.stressLevel !== undefined) setStressLevel(updates.stressLevel);
   };
 
   // Prepare Chart Data
@@ -136,6 +138,7 @@ const LifestyleTracker: React.FC<LifestyleTrackerProps> = ({ onSaveEntry, lifest
       bedTime: bedTime,
       wakeTime: wakeTime,
       sleepFactors: sleepFactors,
+      stressLevel: stressLevel,
       exerciseMinutes: exercise,
       caffeineIntake: caffeine,
       waterIntake: water,
@@ -152,16 +155,19 @@ const LifestyleTracker: React.FC<LifestyleTrackerProps> = ({ onSaveEntry, lifest
 
     onSaveEntry(lifestyle, mood);
     
-    if (anxietyScore > 5) {
-        const tip = await getCopingStrategy(10 - anxietyScore, `I am feeling anxious. Symptoms: ${selectedSymptoms.join(', ')}. ${moodNotes}`);
+    // Use Gemini to suggest coping strategies if anxiety is high
+    if (anxietyScore >= 6) {
+        const tip = await getCopingStrategy(anxietyScore, selectedSymptoms, moodNotes);
         setAiTip(tip);
+    } else {
+        setAiTip('');
     }
     
     setIsSaved(true);
     setTimeout(() => {
       setIsSaved(false);
       setActiveTab('trends'); // Switch to trends after saving to see impact
-    }, 2000); 
+    }, 4000); 
   };
 
   return (
@@ -336,7 +342,7 @@ const LifestyleTracker: React.FC<LifestyleTrackerProps> = ({ onSaveEntry, lifest
           {/* Sleep Tracker Section */}
           <section>
              <SleepTracker 
-                entry={{ sleepHours: sleep, bedTime, wakeTime, sleepQuality, sleepFactors }}
+                entry={{ sleepHours: sleep, bedTime, wakeTime, sleepQuality, sleepFactors, stressLevel }}
                 onChange={handleSleepUpdate}
                 history={lifestyleHistory}
              />
@@ -457,7 +463,7 @@ const LifestyleTracker: React.FC<LifestyleTrackerProps> = ({ onSaveEntry, lifest
                       <Activity size={16} />
                   </div>
                   <div>
-                      <h4 className="font-bold text-teal-800 dark:text-teal-200 text-sm mb-1">AI Coping Tip</h4>
+                      <h4 className="font-bold text-teal-800 dark:text-teal-200 text-sm mb-1">AI Coping Strategy</h4>
                       <p className="text-teal-900 dark:text-teal-100 text-sm">{aiTip}</p>
                   </div>
               </div>

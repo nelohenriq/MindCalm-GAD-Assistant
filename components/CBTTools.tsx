@@ -1,19 +1,23 @@
 
 import React, { useState } from 'react';
-import { ThoughtRecord, ActivityPlan } from '../types';
-import { Brain, Zap, Plus, ArrowRight, CheckSquare, Square, Trash2, MessageCircle } from 'lucide-react';
+import { ThoughtRecord, ActivityPlan, PostponedWorry } from '../types';
+import { Brain, Zap, Plus, ArrowRight, CheckSquare, Square, Trash2, MessageCircle, Clock } from 'lucide-react';
 import CBTWorryLog from './CBTWorryLog';
 import CBTChatbot from './CBTChatbot';
+import CBTWorryPostponement from './CBTWorryPostponement';
 
 interface CBTToolsProps {
   thoughts: ThoughtRecord[];
   addThought: (thought: ThoughtRecord) => void;
   activities: ActivityPlan[];
   updateActivities: (activities: ActivityPlan[]) => void;
+  worries: PostponedWorry[];
+  addWorry: (worry: PostponedWorry) => void;
+  updateWorries: (worries: PostponedWorry[]) => void;
 }
 
-const CBTTools: React.FC<CBTToolsProps> = ({ thoughts, addThought, activities, updateActivities }) => {
-  const [activeModule, setActiveModule] = useState<'restructuring' | 'activation' | 'chatbot'>('restructuring');
+const CBTTools: React.FC<CBTToolsProps> = ({ thoughts, addThought, activities, updateActivities, worries, addWorry, updateWorries }) => {
+  const [activeModule, setActiveModule] = useState<'restructuring' | 'activation' | 'postponement' | 'chatbot'>('restructuring');
   const [isFormOpen, setIsFormOpen] = useState(false);
   
   // Activity Planner State
@@ -70,6 +74,12 @@ const CBTTools: React.FC<CBTToolsProps> = ({ thoughts, addThought, activities, u
              className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeModule === 'activation' ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
            >
              <Zap size={18} /> Activation
+           </button>
+           <button 
+             onClick={() => setActiveModule('postponement')}
+             className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeModule === 'postponement' ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+           >
+             <Clock size={18} /> Postponement
            </button>
            <button 
              onClick={() => setActiveModule('chatbot')}
@@ -226,6 +236,17 @@ const CBTTools: React.FC<CBTToolsProps> = ({ thoughts, addThought, activities, u
                </div>
              ))}
            </div>
+        </div>
+      )}
+
+      {/* WORRY POSTPONEMENT MODULE */}
+      {activeModule === 'postponement' && (
+        <div className="max-w-3xl mx-auto">
+          <CBTWorryPostponement 
+             worries={worries} 
+             addWorry={addWorry} 
+             updateWorries={updateWorries} 
+          />
         </div>
       )}
 
